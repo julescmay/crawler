@@ -58,8 +58,10 @@ class page_summary (HTMLParser):
 
 
 if __name__ == "__main__": # show the difference between flat and 'lumpy'
-    print (page_summary ("http://www.webgineers.co.uk/", True, lambda q: print ("    ", q) ))
+    page_summary.setFlat (True)
+    print (page_summary ("http://www.webgineers.co.uk/", lambda q: print ("    ", q) ))
     print ("\n")
     
-    print (page_summary ("http://www.webgineers.co.uk/", False, lambda q: print ("    ", q)))
+    page_summary.setFlat (False)
+    print (page_summary ("http://www.webgineers.co.uk/", lambda q: print ("    ", q)))
     print ("\n")
