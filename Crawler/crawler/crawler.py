@@ -13,15 +13,19 @@ output_queue = queue.Queue()
 def output_worker () : # where the results get printed
     while True:
         p = output_queue.get();
-        print (p)
-        output_queue.task_done ()
+        try:
+            print (p.toString (args["showThreadNames"]))
+        finally:
+            output_queue.task_done () #mark the url printed, even if somthing went wrong.
         
 def page_worker () : # where the pages get summarised
     while True:
         url = tasklist.get()
-        p = page_summary.page_summary (url,  lambda x: tasklist.put (x))
-        output_queue.put (p)
-        tasklist.task_done ()
+        try:
+            p = page_summary.page_summary (url,  lambda x: tasklist.put (x))
+            output_queue.put (p)
+        finally:
+            tasklist.task_done () # mark the url processed, even if somethign went wrong.
     
     
 # Execution starts here...
@@ -29,6 +33,7 @@ def page_worker () : # where the pages get summarised
 parser=argparse.ArgumentParser (description="Crawl a website")
 parser.add_argument ('-f', action="store_true", default=False, dest="isFlat")
 parser.add_argument ('--t', default=10, type=int, dest="nthreads")
+parser.add_argument ('-n', action="store_true", default=False, dest="showThreadNames")
 parser.add_argument ('url', nargs=1)
 args=vars (parser.parse_args())
 
@@ -36,8 +41,8 @@ args=vars (parser.parse_args())
 t = threading.Thread (name="Output", target=output_worker); t.daemon=True; t.start()
 for i in range (1,args['nthreads']): 
     t=threading.Thread (name="worker-" + str (i), target=page_worker); t.daemon=True; t.start()
-# threads are daemons so they all stop automaictally when the program does.  (Otherwise it's really long-winded to shut everything down)
-# Downside is: we stop being able to see them in the debugger.  Know they're running, bc the crawl is non-deterministic.
+# threads are daemons so they all stop automatically when the program does.  (Otherwise it's really long-winded to shut everything down)
+# Downside is: we stop being able to see them in the debugger.  Know they're running, bc the crawl is non-deterministic.  (Could add a thread code to the output to prove it)
 
 page_summary.page_summary.setFlat (args['isFlat']) # set the global behaviour of the page_summary objects
 
