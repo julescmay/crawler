@@ -1,6 +1,7 @@
 import chunked_responses
 from html.parser import HTMLParser
 from urllib.parse import urljoin
+import threading
 
 class page_summary (HTMLParser):
             
@@ -10,6 +11,7 @@ class page_summary (HTMLParser):
         self.links = set ()
         self.error = ""
         self.onLink = onLink
+        self.threadName = threading.current_thread().name
         
         try:
             for chunk in chunked_responses.chunked_get (rootname, lambda resp: "/html" in resp.headers.get ("Content-Type", "").lower () ) :
@@ -49,10 +51,15 @@ class page_summary (HTMLParser):
             self.Action (self.getAttr (attrs, "src"))
         # Other tags, such as form; attributes, such as style; etc ...
         
-    def __str__ (self) :
-        rv = self.rootname + ":" + self.error
+    def toString (self, showThreadNames) :
+        rv = ""
+        if showThreadNames : rv = self.threadName + ": " 
+        rv += self.rootname + ":" + self.error
         for L in self.links: rv += "\n    " + L 
         return rv;
+        
+    def __str__ (self) :
+        return toString (self, false)
 
 
 
